@@ -1,0 +1,11 @@
+name: node
+platform: backend_fullstack
+language: JavaScript / TypeScript
+framework: Node.js
+
+commands:
+  analyze: "npm run lint"
+  format: "npm run format"
+  test: "npm test"
+  integration_test: "npm run test:e2e"
+  build: "npm run build"

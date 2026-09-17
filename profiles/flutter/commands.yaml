@@ -1,0 +1,23 @@
+name: flutter
+platform: cross-platform (mobile, desktop, web)
+language: Dart
+framework: Flutter
+
+commands:
+  analyze: "flutter analyze"
+  format: "dart format --output=none --set-exit-if-changed ."
+  test: "flutter test"
+  test_coverage: "flutter test --coverage"
+  integration_test: "flutter test integration_test"
+  build_apk: "flutter build apk"
+  build_appbundle: "flutter build appbundle"
+  build_ipa: "flutter build ipa --no-codesign"
+  build_web: "flutter build web"
+
+conditional_rules:
+  integration_test:
+    requires_dir: "integration_test"
+    fallback_status: "N/A"
+  widget_test:
+    requires_file_pattern: "*_test.dart"
+    fallback_status: "NOT_RUN"

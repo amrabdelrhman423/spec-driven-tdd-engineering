@@ -1,324 +1,394 @@
-# Universal Agent Skills for Claude & Google Antigravity (AGY)
+# SDE: Production-Grade AI Software Engineering System
 
-> **A production-grade system and reference architecture for authoring, validating, and executing portable Agent Skills across [Google Antigravity (AGY)](https://deepmind.google) and [Anthropic Claude (Claude Code)](https://claude.ai).**
+> **A framework-agnostic AI Software Engineering System combining [GitHub Spec-Kit](https://github.com/github/spec-kit) Spec-Driven Development (SDD), Test-Driven Development (TDD), Risk-Based Human-in-the-Loop (HITL) Governance, Evidence-Driven Verification, Change Impact Analysis, and Framework Profiles (Flutter-first).**  
+> *Native dual support for [Google Antigravity (AGY)](https://deepmind.google) and [Anthropic Claude (Claude Code)](https://claude.ai).*
 
 ---
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [The Core Skill: `spec-driven-tdd-engineering`](#the-core-skill-spec-driven-tdd-engineering)
-  - [What is it?](#what-is-it)
-  - [What Problem Does It Solve?](#what-problem-does-it-solve)
-  - [The 4-Stage Pipeline](#the-4-stage-pipeline)
-  - [The 7 Mandatory Human Review Gates](#the-7-mandatory-human-review-gates)
-- [How to Use It: Step-by-Step Guide](#how-to-use-it-step-by-step-guide)
-  - [Step 1: Check Constitution (Gate 1)](#step-1-check-constitution-gate-1)
-  - [Step 2: Scaffold & Approve Specification (Gate 2)](#step-2-scaffold--approve-specification-gate-2)
-  - [Step 3: Draft & Approve Technical Blueprint (Gate 3)](#step-3-draft--approve-technical-blueprint-gate-3)
-  - [Step 4: Generate & Authorize TDD Tasks (Gate 4)](#step-4-generate--authorize-tdd-tasks-gate-4)
-  - [Step 5: Execute TDD Cycles (Gates 5 & 6)](#step-5-execute-tdd-cycles-gates-5--6)
-  - [Step 6: Audit & Merge Sign-Off (Gate 7)](#step-6-audit--merge-sign-off-gate-7)
-- [Architecture & Cross-Agent Portability](#architecture--cross-agent-portability)
-  - [Repository Layout](#repository-layout)
-  - [How Google Antigravity (AGY) Loads Skills](#how-google-antigravity-agy-loads-skills)
-  - [How Anthropic Claude Loads Skills](#how-anthropic-claude-loads-skills)
-- [CLI Tooling](#cli-tooling)
-  - [1. GitHub Spec-Kit CLI (`tools/speckit.py`)](#1-github-spec-kit-cli-toolsspeckitpy)
-  - [2. Multi-Agent Skill Builder (`tools/skill_builder.py`)](#2-multi-agent-skill-builder-toolsskill_builderpy)
-- [Included Reference Implementations](#included-reference-implementations)
-- [Verification & Automated Test Suite](#verification--automated-test-suite)
+- [1. What is SDE?](#1-what-is-sde)
+- [2. The Problem It Solves: Why SDD + TDD?](#2-the-problem-it-solves-why-sdd--tdd)
+- [3. GitHub Spec-Kit Relationship](#3-github-spec-kit-relationship)
+- [4. The End-to-End Workflow](#4-the-end-to-end-workflow)
+- [5. System Architecture: Core vs. Framework Profiles](#5-system-architecture-core-vs-framework-profiles)
+- [6. The Flutter Profile (Flutter-First Engineering)](#6-the-flutter-profile-flutter-first-engineering)
+- [7. Risk-Based Human-in-the-Loop (HITL) Model](#7-risk-based-human-in-the-loop-hitl-model)
+- [8. Change Impact Analysis](#8-change-impact-analysis)
+- [9. Evidence-Driven Verification & The Truth Protocol](#9-evidence-driven-verification--the-truth-protocol)
+- [10. Unified CLI: `sde`](#10-unified-cli-sde)
+- [11. Supported Agent Targets (Claude & Antigravity)](#11-supported-agent-targets-claude--antigravity)
+- [12. Complete Reference Example: Flutter Authentication](#12-complete-reference-example-flutter-authentication)
+- [13. Fast-Track Workflows](#13-fast-track-workflows)
+- [14. Verification & Automated Test Suite](#14-verification--automated-test-suite)
+- [15. Roadmap](#15-roadmap)
 
 ---
 
-## Overview
+## 1. What is SDE?
 
-Modern AI coding agents are exceptionally capable at generating code quickly, but unrestricted autonomy often leads to **"vibe coding"**, architectural drift, hallucinations, and breaking changes. 
+**SDE (Spec-Driven Engineering)** evolves AI coding assistants from unconstrained, speculative code generators into disciplined software engineers.
 
-This repository provides an end-to-end framework solving this problem through:
-1. **`spec-driven-tdd-engineering` Skill**: A disciplined engineering workflow fusing **[GitHub Spec-Kit](https://github.com/github/spec-kit)** Spec-Driven Development (SDD) with **Test-Driven Development (TDD)** and **Human-in-the-Loop (HITL)** checkpoints.
-2. **`skill-creator` Meta-Skill & Tooling**: An automated CLI tool (`tools/skill_builder.py`) to scaffold, lint, validate link integrity, and keep dual `.agents/` and `.claude/` skill directories in sync.
-3. **Dual Agent Runtime Portability**: Out-of-the-box support for **Google Antigravity** (`.agents/skills/`, `AGENTS.md`, `GEMINI.md`) and **Anthropic Claude** (`.claude/skills/`, `CLAUDE.md`).
+Instead of allowing an AI to guess requirements and write code in a vacuum, SDE enforces a deterministic engineering pipeline:
+
+$$\text{User Intent} \longrightarrow \text{Implementation} + \text{Verification} + \text{Evidence}$$
+
+Every software modification is guided by a formal specification, designed with explicit technical contracts, verified via failing-then-passing tests, audited against an architectural blast radius, and backed by recorded execution logs.
 
 ---
 
-## The Core Skill: `spec-driven-tdd-engineering`
+## 2. The Problem It Solves: Why SDD + TDD?
 
-### What is it?
+When developers use AI coding agents without strict constraints, several failure modes emerge:
 
-`spec-driven-tdd-engineering` is an **Agent Skill** designed to transform AI coding assistants from unchecked code generators into rigorous software engineers. It standardizes the development process around four non-negotiable artifacts:
-- **`constitution.md`**: Foundational repository covenants, security boundaries, and architectural rules.
-- **`spec.md`**: Business context, user stories, acceptance criteria, and non-negotiable domain invariants.
-- **`plan.md`**: Technical blueprints, component interfaces, data contracts, and failure matrices.
-- **`tasks.md`**: Atomic, ordered Red-Green-Refactor test tasks.
-
-### What Problem Does It Solve?
-
-| Traditional AI Coding ("Vibe Coding") | With `spec-driven-tdd-engineering` |
+| Unconstrained AI Coding ("Vibe Coding") | With the SDE System |
 | :--- | :--- |
-| ❌ **Autonomous Runaway**: Agent churns out hundreds of lines without checking in. | ✅ **7 Human Review Gates**: Agent stops at critical checkpoints and awaits explicit human approval. |
-| ❌ **Hallucinated Requirements**: Agent guesses business rules and edge cases. | ✅ **Spec-First Contracts**: Formal user stories and domain invariants in `spec.md` prevent ambiguity. |
-| ❌ **Untested Code & Regressions**: Code is written first; tests are written as an afterthought (or never). | ✅ **Strict TDD (Red -> Green -> Refactor)**: Failing tests are authored and witnessed before implementation code. |
-| ❌ **Over-Engineering & Speculation**: Agent adds unrequested libraries, features, or abstractions. | ✅ **Constitutional & Minimalist Enforcement**: Agent writes only the minimal code to satisfy failing tests. |
-| ❌ **Platform Lock-In**: Skills written for one LLM tool fail on others. | ✅ **Universal Dual Compatibility**: Fully portable across Google Antigravity and Anthropic Claude. |
+| ❌ **Autonomous Runaway**: Agent modifies dozens of files without checking in or seeking guidance. | ✅ **Risk-Calibrated HITL**: Agent halts at mandatory gates based on risk (LOW, MEDIUM, HIGH, CRITICAL). |
+| ❌ **Hallucinated Requirements & Scope Creep**: Agent guesses domain rules and adds unrequested libraries. | ✅ **Spec-First (SDD)**: Business stories, domain invariants, and out-of-scope non-goals are locked in `spec.md`. |
+| ❌ **Brittle Code & Silent Regressions**: Code is written first; tests are written as an afterthought or skipped. | ✅ **Strict TDD (Red $\rightarrow$ Green $\rightarrow$ Refactor)**: Expected assertion failures are witnessed before code is written. |
+| ❌ **Untracked Blast Radius**: Agent modifies unrelated files, breaking downstream dependencies. | ✅ **Change Impact Analysis**: Pre-implementation expected scope (`impact.md`) is audited against Git diffs. |
+| ❌ **Fake Test Claims**: Agents claim "all tests pass" without executing runners or for missing tests. | ✅ **The Truth Protocol**: Raw output is captured in `evidence/`. Unexecuted suites are strictly marked `N/A` or `NOT_RUN`. |
 
 ---
 
-### The 4-Stage Pipeline
+## 3. GitHub Spec-Kit Relationship
+
+SDE does **not** replace [GitHub Spec-Kit](https://github.com/github/spec-kit); it builds upon it as a foundational specification standard.
 
 ```text
-┌────────────────────────────────────────────────────────────────────────┐
-│  STAGE 1: CONSTITUTION CHECK                                           │
-│  Agent verifies repository principles in constitution.md               │
-│  🚦 GATE 1: Constitution Alignment & Amendments                       │
-├────────────────────────────────────────────────────────────────────────┤
-│  STAGE 2a: SPECIFICATION (spec.md)                                     │
-│  Agent defines user stories, invariants, acceptance criteria           │
-│  🚦 GATE 2: Specification Approval                                     │
-├────────────────────────────────────────────────────────────────────────┤
-│  STAGE 2b: TECHNICAL PLAN (plan.md)                                    │
-│  Agent designs architecture, interfaces, and error matrix              │
-│  🚦 GATE 3: Technical Blueprint & Contract Approval                    │
-├────────────────────────────────────────────────────────────────────────┤
-│  STAGE 2c: TASK BREAKDOWN (tasks.md)                                   │
-│  Agent decomposes plan into atomic TDD Red-Green-Refactor tasks        │
-│  🚦 GATE 4: Task Execution Authorization                               │
-├────────────────────────────────────────────────────────────────────────┤
-│  STAGE 3: TDD IMPLEMENTATION LOOP (Per Task)                           │
-│  Agent authors failing test, executes, confirms failure                │
-│  🚦 GATE 5: Failing Test (Red) Approval                                │
-│  Agent implements minimal code, refactors, confirms all pass           │
-│  🚦 GATE 6: Minimal Code & Refactor (Green) Approval                   │
-├────────────────────────────────────────────────────────────────────────┤
-│  STAGE 4: FINAL AUDIT & DELIVERY                                       │
-│  Agent runs full suite, verifies invariants, audits checklist          │
-│  🚦 GATE 7: Final Verification & Merge Sign-Off                        │
-└────────────────────────────────────────────────────────────────────────┘
+GitHub Spec-Kit (SDD Foundation)
+      │
+      ├── Repository Constitution (.specify/constitution.md)
+      ├── Specifications (.specify/specs/<feature>/spec.md)
+      ├── Technical Plans (.specify/specs/<feature>/plan.md)
+      └── Task Breakdowns (.specify/specs/<feature>/tasks.md)
+            │
+            ▼
+SDE AI Engineering System (This Project Adds)
+      ├── Strict TDD Lifecycle (Red -> Green -> Refactor)
+      ├── Risk Model & Risk-Based HITL Gates (LOW, MED, HIGH, CRITICAL)
+      ├── Change Impact Analysis (impact.md & Git Diff Audits)
+      ├── Evidence Verification System (verification.md & raw logs)
+      ├── The Truth Protocol (Guaranteed genuine test reporting)
+      ├── Framework Profiles (Flutter-first, Android, Node, Generic)
+      ├── Multi-Agent Runtimes (Google Antigravity & Anthropic Claude)
+      ├── Unified CLI Orchestrator (`sde doctor`, `sde run`)
+      └── CI/CD Awareness & Deployment Sign-Off
 ```
 
 ---
 
-### The 7 Mandatory Human Review Gates
-
-Autonomous execution past gates is strictly forbidden. At each gate, the agent halts and prompts the user:
-
-1. **🚦 Gate 1: Constitution Alignment & Amendments**
-   - *When*: Before scaffolding any feature.
-   - *Prompt*: *"I have reviewed `.specify/constitution.md`. Constraints governing this work are: [summary]. Do these apply as written, or are amendments needed?"*
-2. **🚦 Gate 2: Specification Approval (`spec.md`)**
-   - *When*: After drafting the specification.
-   - *Prompt*: *"Please review the specification draft. Are domain invariants correct? Any missing acceptance criteria or edge cases? Do you approve this specification?"*
-3. **🚦 Gate 3: Technical Blueprint & Contract Approval (`plan.md`)**
-   - *When*: After drafting the technical architecture.
-   - *Prompt*: *"Please review the technical plan. Do the public interface signatures and data models meet your requirements? Is the error matrix complete? Do you approve this blueprint?"*
-4. **🚦 Gate 4: Task Execution Authorization (`tasks.md`)**
-   - *When*: After breaking the plan into atomic TDD tasks.
-   - *Prompt*: *"Here is the TDD task breakdown. Is the task ordering and scope appropriate? Do you authorize beginning TDD execution on Phase 1?"*
-5. **🚦 Gate 5: Failing Test (Red) Approval**
-   - *When*: Per-task, after writing the test and confirming it fails.
-   - *Prompt*: *"Task [X.Y] (RED): Test fails with [assertion error]. Do you approve this test contract before I write the minimal implementation?"*
-6. **🚦 Gate 6: Minimal Implementation & Refactor (Green) Approval**
-   - *When*: Per-task, after writing minimal code and passing tests.
-   - *Prompt*: *"Task [X.Y] (GREEN & REFACTOR): All tests pass cleanly. Refactorings: [summary]. Do you approve this implementation to mark Task [X.Y] complete and move to the next task?"*
-7. **🚦 Gate 7: Final Verification & Merge Sign-Off**
-   - *When*: After all tasks and quality checklists pass 100%.
-   - *Prompt*: *"All tasks complete, 100% tests pass, checklist satisfied. Do you give final approval to merge / finalize this feature?"*
-
-> [!NOTE]
-> For complete protocol mechanics, approval keywords, revision loops, and fast-track rules, see [references/human_in_the_loop_protocol.md](.agents/skills/spec-driven-tdd-engineering/references/human_in_the_loop_protocol.md).
-
----
-
-## How to Use It: Step-by-Step Guide
-
-Whether you are prompting an agent in **Antigravity IDE** or **Claude Code**, here is the standard workflow:
-
-### Step 1: Check Constitution (Gate 1)
-Verify repository covenants before planning:
-```bash
-# Read existing repository constitution
-cat .specify/constitution.md
-
-# Or initialize a new constitution if starting a fresh repo
-python tools/speckit.py init
-```
-*Agent halts at **Gate 1** to confirm constitutional rules with the developer.*
-
-### Step 2: Scaffold & Approve Specification (Gate 2)
-Scaffold the feature specification:
-```bash
-python tools/speckit.py specify payment-gateway
-```
-- The agent populates `.specify/specs/payment-gateway/spec.md` using [speckit_specification_template.md](.agents/skills/spec-driven-tdd-engineering/templates/speckit_specification_template.md).
-- Documents: Problem Statement, User Stories, In-Scope / Out-of-Scope, Domain Invariants, Given-When-Then criteria.
-*Agent halts at **Gate 2** to solicit human approval of requirements and domain invariants.*
-
-### Step 3: Draft & Approve Technical Blueprint (Gate 3)
-Scaffold the technical plan:
-```bash
-python tools/speckit.py plan payment-gateway
-```
-- The agent populates `.specify/specs/payment-gateway/plan.md` using [speckit_plan_template.md](.agents/skills/spec-driven-tdd-engineering/templates/speckit_plan_template.md).
-- Documents: Architecture diagram, module layout, public contracts, and error handling matrix.
-*Agent halts at **Gate 3** to verify signatures and error handling with the developer.*
-
-### Step 4: Generate & Authorize TDD Tasks (Gate 4)
-Generate the atomic task checklist:
-```bash
-python tools/speckit.py tasks payment-gateway
-```
-- Populates `.specify/specs/payment-gateway/tasks.md` with structured Red/Green/Refactor task items.
-*Agent halts at **Gate 4** to authorize starting code execution.*
-
-### Step 5: Execute TDD Cycles (Gates 5 & 6)
-For each task in `tasks.md`:
-1. **Red**: Agent writes test -> runs runner -> test fails -> **Gate 5 (Human verifies test & failure mode)**.
-2. **Green**: Agent writes minimal passing code -> runs runner -> all tests pass.
-3. **Refactor**: Agent cleans code, fixes types, runs linters -> tests still pass -> **Gate 6 (Human approves implementation)**.
-
-Track real-time progress:
-```bash
-python tools/speckit.py status
-```
-
-### Step 6: Audit & Merge Sign-Off (Gate 7)
-Run static analysis, type checks, and complete the quality audit:
-```bash
-# Verify unit tests
-python -m unittest discover -s tests
-
-# Audit Spec-Kit checklist
-cat .specify/specs/payment-gateway/checklist.md
-```
-*Agent halts at **Gate 7** for final human authorization to merge or release.*
-
----
-
-## Architecture & Cross-Agent Portability
-
-### Repository Layout
+## 4. The End-to-End Workflow
 
 ```text
-├── AGENTS.md                          # Universal agent directives & HITL policy
-├── GEMINI.md                          # Google Antigravity specific configuration
-├── CLAUDE.md                          # Anthropic Claude Code commands & guidelines
-├── .specify/                          # Spec-Kit directory
-│   ├── constitution.md                # Non-negotiable repository covenants (Article I-V)
-│   └── specs/                         # Feature specifications, plans, and tasks
-├── .agents/skills/                    # Primary skill discovery root (AGY)
-│   ├── spec-driven-tdd-engineering/   # The TDD + SDD Engineering Skill
-│   │   ├── SKILL.md                   # Main runbook with frontmatter & 7 Human Gates
-│   │   ├── references/                # In-depth theory & protocol guides
-│   │   ├── templates/                 # Spec, plan, task, and checklist templates
-│   │   └── examples/                  # Reference Python & TypeScript projects
-│   └── skill-creator/                 # Meta-skill for authoring new agent skills
-├── .claude/skills/                    # Synchronized Claude mirror
-├── tools/
-│   ├── speckit.py                     # GitHub Spec-Kit workflow CLI
-│   └── skill_builder.py               # Skill validation, scaffolding, & sync CLI
-└── tests/                             # Unit tests for CLI tools and validators
+User Intent
+    ↓
+Repository Discovery (`sde doctor`)
+    ↓
+Risk Assessment (`risk.md`)
+    ↓
+Specification (`spec.md`)  ──> [🚦 Gate 2: Spec Approval]
+    ↓
+Implementation Plan (`plan.md`) ──> [🚦 Gate 3: Plan Approval (High/Critical)]
+    ↓
+Change Impact Analysis (`impact.md`)
+    ↓
+TDD Task Design (`tasks.md`)
+    ↓
+RED (Failing Test on Domain Assertion)
+    ↓
+Implementation (Minimal passing code)
+    ↓
+GREEN (All tests passing)
+    ↓
+REFACTOR (Clean types, formatting, linting)
+    ↓
+Impact Audit (Verify actual Git diff matches `impact.md`)
+    ↓
+Evidence Collection (Write `tests.txt`, `analysis.txt` to `evidence/`)
+    ↓
+Verification Report (`verification.md`)
+    ↓
+[🚦 Gate 7: Final Verification & Merge Sign-Off]
+    ↓
+CI/CD & Deployment
 ```
-
-### How Google Antigravity (AGY) Loads Skills
-- AGY discovers skills from `.agents/skills/<skill_name>/SKILL.md`.
-- **Progressive Disclosure**: Only the `name` and `description` from the YAML frontmatter are injected into the agent prompt initially.
-- When triggered by a coding task, AGY reads `SKILL.md` and loads linked references in `references/` on demand.
-
-### How Anthropic Claude Loads Skills
-- Claude reads directives from `CLAUDE.md`.
-- Claude discovers mirrored skills under `.claude/skills/<skill_name>/SKILL.md`.
-- Claude follows progressive links and executes CLI commands.
 
 ---
 
-## CLI Tooling
+## 5. System Architecture: Core vs. Framework Profiles
 
-### 1. GitHub Spec-Kit CLI (`tools/speckit.py`)
+SDE cleanly separates **framework-agnostic engineering logic** from **platform-specific commands and conventions**:
 
-Driven by the [GitHub Spec-Kit](https://github.com/github/spec-kit) standard, this script manages the SDD artifact lifecycle:
+```text
+SDE Architecture
+│
+├── SDE CORE (Framework-Agnostic)
+│   ├── SDD Engine (Specifications, Invariants, Acceptance Criteria)
+│   ├── TDD Engine (Red-Green-Refactor, Intent Validation)
+│   ├── Risk Model (LOW, MEDIUM, HIGH, CRITICAL classification)
+│   ├── HITL Protocol (Risk-calibrated human review gates)
+│   ├── Evidence System (Truth Protocol, verification.md, raw logs)
+│   ├── Change Impact Analyzer (Expected scope vs. Git diff)
+│   ├── Diagnostic Doctor (`sde doctor`)
+│   └── Workflow Orchestrator (`sde run`)
+│
+└── FRAMEWORK PROFILES (Platform-Specific)
+    ├── Flutter Profile (Dart, Cubit, Riverpod, Provider, GetIt, APK/IPA)
+    ├── Android Profile (Kotlin/Java, Gradle, Hilt, JUnit)
+    ├── Node.js Profile (JavaScript/TypeScript, npm, Jest, NestJS)
+    └── Generic Profile (Agnostic fallback)
+```
 
+Each profile encapsulates:
+- Dynamic command resolution (e.g. if `integration_test/` does not exist, marks status as `N/A`, never `PASS`).
+- Architecture inspection (detects existing conventions from `pubspec.yaml`, `package.json`, etc.).
+- Build scripts and lint configurations.
+
+---
+
+## 6. The Flutter Profile (Flutter-First Engineering)
+
+Flutter is the first fully supported, production-grade framework profile.
+
+### Capabilities
+- **Static Analysis**: `flutter analyze`
+- **Formatting**: `dart format --output=none --set-exit-if-changed .`
+- **Unit & Widget Tests**: `flutter test`
+- **Integration Tests**: `flutter test integration_test` (conditional)
+- **Production Builds**: `flutter build apk`, `flutter build appbundle`, `flutter build ipa --no-codesign`
+
+### Architecture Awareness & The Precedence Rule
+
+> **The Golden Precedence Rule**:  
+> **Always follow repository precedent before introducing personal preference.**
+
+The Flutter profile automatically detects existing repository patterns:
+- **State Management**: Inspects dependencies for `flutter_bloc` (Bloc/Cubit), `flutter_riverpod` (Riverpod), `provider` (Provider), or `get` (GetX). Never injects a second state management framework if one already exists.
+- **Dependency Injection**: Inspects for `get_it` or `injectable`. Registers new dependencies within existing locators.
+- **Folder Structure**: Follows Feature-First (`lib/features/<feature>/`) or Layer-First (`lib/presentation/`, `lib/domain/`, etc.).
+
+---
+
+## 7. Risk-Based Human-in-the-Loop (HITL) Model
+
+Instead of requiring 7 manual approvals for a trivial one-line text change, SDE uses a **Risk-Calibrated HITL Model**:
+
+```text
+┌──────────────┬──────────────────────────────────────────┬────────────────────────────────────────────┐
+│ Tier         │ Typical Scope                            │ Required Human Gates                       │
+├──────────────┼──────────────────────────────────────────┼────────────────────────────────────────────┤
+│ **LOW**      │ Small UI tweaks, text, formatting, safe  │ **Fast Track**: Spec → Plan → TDD → Verify │
+│              │ refactoring, single-widget styling.      │ (Stop only at Gate 7 for Final Sign-Off)   │
+├──────────────┼──────────────────────────────────────────┼────────────────────────────────────────────┤
+│ **MEDIUM**   │ Standard features, state management, API │ 🚦 Gate 2 (Spec Approval)                  │
+│              │ integration, DB queries, local auth.     │ 🚦 Gate 7 (Final Verification Sign-Off)    │
+├──────────────┼──────────────────────────────────────────┼────────────────────────────────────────────┤
+│ **HIGH**     │ Payments, security, PII, architectural   │ 🚦 Gate 2 (Spec Approval)                  │
+│              │ redesign, breaking interface changes.    │ 🚦 Gate 3 (Technical Blueprint Approval)   │
+│              │                                          │ 🚦 Gate 7 (Final Verification Sign-Off)    │
+├──────────────┼──────────────────────────────────────────┼────────────────────────────────────────────┤
+│ **CRITICAL** │ Production DB deletion, credential/key   │ 🚦 Gate 0 (Pre-Execution Authorization)    │
+│              │ modification, destructive migration.     │ 🚦 Gates 2, 3, 4, 7 (Strict Sign-off)       │
+└──────────────┴──────────────────────────────────────────┴────────────────────────────────────────────┘
+```
+
+Every feature receives an assessed `risk.md` artifact detailing:
+- Factors: `architecture_change`, `security_sensitive`, `data_migration`, `production_impact`, `breaking_change`, `irreversible_deletion`.
+- Rationale explaining why the tier was assigned.
+
+---
+
+## 8. Change Impact Analysis
+
+Before writing implementation code, the agent defines the **Expected Architectural Scope** in `impact.md`:
+- Presentation layer (`*.dart`, UI widgets)
+- State management (`*.cubit.dart`, `*.bloc.dart`)
+- Domain layer (Entities, Repositories, UseCases)
+- Data layer (DataSources, DTOs)
+- Dependency injection (`injection.dart`)
+- Automated tests (`*_test.dart`)
+- Configuration (`pubspec.yaml`, `package.json`)
+
+Post-implementation, the CLI audits actual Git modifications against the prediction:
 ```bash
-# 1. Initialize repository constitution (.specify/constitution.md)
-python tools/speckit.py init
+python tools/sde.py feature impact <feature-name> --audit
+```
+If unpredicted files are touched, the system outputs:
+```text
+[FAIL] WARNING: Unexpected Change! The following files were modified outside expected scope:
+  * lib/unrelated_payment_engine.dart
+```
+The agent must document the rationale for the expanded blast radius before proceeding.
 
-# 2. Scaffold a new feature specification
-python tools/speckit.py specify <feature-name>
+---
+
+## 9. Evidence-Driven Verification & The Truth Protocol
+
+In SDE, **no assertion of correctness is accepted without verifiable evidence**.
+
+### The Truth Protocol
+- **Never represent `NOT_RUN` as `PASS`.**
+- **Never claim a test passed unless the runner executed and exited with code 0.**
+- **Never claim integration or device verification occurred if the test was not run.**
+- Optional suites that do not exist in the repository (e.g. `integration_test/`) are strictly marked **`N/A`**.
+
+### Standard Verification Artifact (`verification.md`)
+Every feature produces a structured `verification.md`:
+```markdown
+# Verification Report: auth-login
+- **Specification Compliance**: PASS
+- **Automated Tests**: PASS (Command: `flutter test`, Log: `evidence/tests.txt`)
+- **Static Analysis**: PASS (Command: `flutter analyze`, Log: `evidence/analysis.txt`)
+- **Build Verification**: PASS (Command: `flutter build apk --debug`)
+- **Integration Tests**: N/A (integration_test/ directory absent)
+- **Real Device Verification**: NOT_RUN (Scheduled for release staging)
+```
+
+---
+
+## 10. Unified CLI: `sde`
+
+The `sde` CLI provides an integrated developer experience:
+
+### Environment Diagnostics
+```bash
+# Inspect repository readiness (Git, Constitution, Framework, Tests, CI)
+python tools/sde.py doctor
+```
+
+### Feature Lifecycle
+```bash
+# 1. Scaffold specification
+python tools/sde.py feature specify <feature-name>
+
+# 2. Assess risk
+python tools/sde.py feature risk <feature-name> --level medium
 
 # 3. Scaffold technical blueprint
-python tools/speckit.py plan <feature-name>
+python tools/sde.py feature plan <feature-name>
 
-# 4. Scaffold TDD implementation tasks
-python tools/speckit.py tasks <feature-name>
+# 4. Record expected change scope
+python tools/sde.py feature impact <feature-name> --presentation ... --state ... --tests ...
 
-# 5. Check completion status across all features
-python tools/speckit.py status
+# 5. Scaffold TDD tasks
+python tools/sde.py feature tasks <feature-name>
+
+# 6. Audit actual Git changes against expected scope
+python tools/sde.py feature impact <feature-name> --audit
+
+# 7. Check status
+python tools/sde.py status
 ```
 
-### 2. Multi-Agent Skill Builder (`tools/skill_builder.py`)
-
-CLI utility to validate, scaffold, and sync skills across both agent runtimes:
-
+### Full Pipeline Orchestration
 ```bash
-# 1. Validate all skills (frontmatter, <500 lines threshold, markdown link integrity)
-python tools/skill_builder.py validate
+# Orchestrate full pipeline; halts automatically when human approval is required
+python tools/sde.py run <feature-name>
 
-# 2. Synchronize skills from .agents/ to .claude/
-python tools/skill_builder.py sync
+# Resume after reviewing and approving a specific gate
+python tools/sde.py run <feature-name> --approve "Gate 2: Specification Approval (spec.md)"
 
-# 3. Scaffold a new custom skill
-python tools/skill_builder.py new <skill-name> --desc "Use this skill when..."
-
-# 4. List installed skills
-python tools/skill_builder.py list
+# Fast-track override (approves all gates for low-risk changes)
+python tools/sde.py run <feature-name> --approve-all
 ```
 
----
+### Framework Profiles & Skills
+```bash
+# Detect active framework profile and conventions
+python tools/sde.py profile detect
 
-## Included Reference Implementations
+# List available profiles
+python tools/sde.py profile list
 
-The workspace includes complete, working reference implementations built using the `spec-driven-tdd-engineering` skill:
+# Validate all agent skills
+python tools/sde.py skill validate
 
-### 1. Python: E-Commerce Order Processor
-- **Location**: `.agents/skills/spec-driven-tdd-engineering/examples/python_example/`
-- **Features**: State machine transitions (`PENDING -> PAID -> SHIPPED`), domain invariant enforcement, isolated unit tests.
-- **Run Tests**:
-  ```bash
-  python -m unittest discover -s .agents/skills/spec-driven-tdd-engineering/examples/python_example
-  ```
+# Synchronize skills to Claude mirror
+python tools/sde.py skill sync
+```
 
-### 2. JavaScript / TypeScript: Shopping Cart Discount Engine
-- **Location**: `.agents/skills/spec-driven-tdd-engineering/examples/typescript_example/`
-- **Features**: Percentage & fixed coupons, free shipping calculation, invariant boundary guards.
-- **Run Tests**:
-  ```bash
-  node --test .agents/skills/spec-driven-tdd-engineering/examples/typescript_example/cart_discount.test.js
-  ```
+*(Legacy commands `python tools/speckit.py` and `python tools/skill_builder.py` remain fully supported).*
 
 ---
 
-## Verification & Automated Test Suite
+## 11. Supported Agent Targets (Claude & Antigravity)
 
-To verify workspace integrity, link validity, and tool functionality, run the unit test suite:
+SDE maintains dual compatibility with zero vendor lock-in:
 
+### Google Antigravity (AGY)
+- **Configuration**: `GEMINI.md` and `AGENTS.md`
+- **Skills Location**: `.agents/skills/`
+- **Mechanism**: Progressive disclosure via YAML frontmatter triggers.
+
+### Anthropic Claude (Claude Code)
+- **Configuration**: `CLAUDE.md` and `AGENTS.md`
+- **Skills Location**: `.claude/skills/` (synchronized from `.agents/skills/`)
+- **Mechanism**: Terminal execution of `sde` CLI commands.
+
+---
+
+## 12. Complete Reference Example: Flutter Authentication
+
+The repository includes a complete, production-grade Flutter reference implementation:
+
+- **Location**: `.agents/skills/spec-driven-tdd-engineering/examples/flutter_example/`
+- **Stack**: Flutter 3.x, Dart 3.x, `flutter_bloc` (Cubit), `get_it` service locator, `mocktail`.
+- **Architecture**: Feature-First Clean Architecture (`lib/features/auth/`).
+- **Artifacts Included**:
+  - [`specs/spec.md`](.agents/skills/spec-driven-tdd-engineering/examples/flutter_example/specs/spec.md): User stories, domain invariants, acceptance criteria.
+  - [`specs/plan.md`](.agents/skills/spec-driven-tdd-engineering/examples/flutter_example/specs/plan.md): Mermaid component flow, public interfaces, error matrix.
+  - [`specs/risk.md`](.agents/skills/spec-driven-tdd-engineering/examples/flutter_example/specs/risk.md): Assessed `MEDIUM` risk due to authentication credentials.
+  - [`specs/impact.md`](.agents/skills/spec-driven-tdd-engineering/examples/flutter_example/specs/impact.md): Expected architectural scope across all layers.
+  - [`specs/tasks.md`](.agents/skills/spec-driven-tdd-engineering/examples/flutter_example/specs/tasks.md): Atomic Red-Green-Refactor tasks.
+  - [`specs/verification.md`](.agents/skills/spec-driven-tdd-engineering/examples/flutter_example/specs/verification.md): Full verification report with evidence logs.
+- **Source Code**:
+  - Domain: `lib/features/auth/domain/entities/user.dart`, `lib/features/auth/domain/repositories/auth_repository.dart`
+  - Presentation / State: `lib/features/auth/presentation/cubit/login_cubit.dart`, `lib/features/auth/presentation/cubit/login_state.dart`
+  - DI Locator: `lib/core/di/injection.dart`
+  - Tests: `test/features/auth/presentation/cubit/login_cubit_test.dart`
+
+---
+
+## 13. Fast-Track Workflows
+
+For cosmetic, styling, or minor changes classified as **`LOW` risk**:
+1. Run `python tools/sde.py feature specify <name>` to define the single acceptance criterion.
+2. Run `python tools/sde.py run <name> --approve-all` or execute the TDD loop directly.
+3. The agent does **not** stop for intermediate approvals between Spec, Plan, and Code.
+4. The agent presents the verified diff, test output, and `verification.md` at **Gate 7 (Final Sign-Off)**.
+
+---
+
+## 14. Verification & Automated Test Suite
+
+The SDE system itself is thoroughly tested with **41 automated unit tests** covering:
+- Risk classification, factor detection, and gate evaluation (`test_risk.py`)
+- Evidence collection and Truth Protocol enforcement (`test_evidence.py`)
+- Change impact analysis and Git diff auditing (`test_impact.py`)
+- Framework profile detection and conditional command resolution (`test_profiles.py`)
+- TDD intent validation and failure classification (`test_tdd.py`)
+- Diagnostic checks and readiness reporting (`test_doctor.py`)
+- Workflow engine and HITL gate blocking (`test_orchestrator.py`)
+- SDE CLI commands (`test_sde_cli.py`)
+- Spec-Kit and Skill Builder backward compatibility (`test_speckit.py`, `test_skill_builder.py`)
+
+Run the complete test suite:
 ```bash
 python -m unittest discover -s tests
 ```
 
-**Test Coverage Summary**:
-- `test_skill_builder.py`: Validates YAML frontmatter parsing, progressive disclosure limits, relative link resolution, and file synchronization.
-- `test_speckit.py`: Validates feature scaffolding (`specify`, `plan`, `tasks`), constitution initialization, and status reporting.
-
 ---
 
-## Documentation Index
+## 15. Roadmap
 
-| Guide | Purpose |
-| :--- | :--- |
-| [human_in_the_loop_protocol.md](.agents/skills/spec-driven-tdd-engineering/references/human_in_the_loop_protocol.md) | **HITL philosophy, 7 gate triggers, approval keywords, and revision loops** |
-| [github_spec_kit_guide.md](.agents/skills/spec-driven-tdd-engineering/references/github_spec_kit_guide.md) | GitHub Spec-Kit artifact hierarchy and lifecycle |
-| [sdd_methodology.md](.agents/skills/spec-driven-tdd-engineering/references/sdd_methodology.md) | Spec-Driven Development deep dive |
-| [tdd_lifecycle.md](.agents/skills/spec-driven-tdd-engineering/references/tdd_lifecycle.md) | Red-Green-Refactor mechanics and anti-patterns |
-| [invariant_and_property_testing.md](.agents/skills/spec-driven-tdd-engineering/references/invariant_and_property_testing.md) | Invariants and property-based testing guide |
-| [test_doubles_and_mocking.md](.agents/skills/spec-driven-tdd-engineering/references/test_doubles_and_mocking.md) | In-memory fakes vs. mocks best practices |
-| [claude_vs_agy.md](.agents/skills/skill-creator/references/claude_vs_agy.md) | Architectural comparison of Claude Code vs. Google Antigravity |
-| [progressive_disclosure.md](.agents/skills/skill-creator/references/progressive_disclosure.md) | Token economy and progressive disclosure rules |
+- [x] SDE Core (SDD, TDD, Risk-based HITL, Evidence System, Impact Analysis)
+- [x] Unified SDE CLI (`sde doctor`, `sde run`, `sde feature`, `sde profile`, `sde skill`)
+- [x] Flutter Framework Profile with Cubit/Riverpod/GetIt architecture awareness
+- [x] Complete Flutter Authentication reference example
+- [x] Android SDK and Node.js Profiles
+- [x] CI/CD GitHub Actions Workflow (`.github/workflows/verify.yml`)
+- [ ] Golden Toolkit integration for Flutter widget regression testing
+- [ ] Native iOS Xcode / Swift Profile
+- [ ] Go and Rust Framework Profiles
+- [ ] Automated PR description generator compiling `verification.md` into GitHub PR summaries

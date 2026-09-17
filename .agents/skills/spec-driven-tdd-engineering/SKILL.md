@@ -1,160 +1,119 @@
 ---
 name: spec-driven-tdd-engineering
 description: >-
-  Use this skill when designing, building, fixing, or refactoring software features using GitHub Spec-Kit Spec-Driven Development (SDD) and Test-Driven Development (TDD). Enforces Human-in-the-Loop (HITL) gates at every stage: constitution alignment, spec approval, technical plan review, task authorization, failing test confirmation (Red), minimal code validation (Green/Refactor), and final merge sign-off.
+  Use this skill when designing, building, fixing, or refactoring software features using GitHub Spec-Kit Spec-Driven Development (SDD), Test-Driven Development (TDD), risk-based Human-in-the-Loop gates, evidence verification, and framework profiles (Flutter, Android, Node).
 ---
 
 # Spec-Driven TDD Engineering Skill
 
-This skill guides agents through a defect-free engineering workflow combining **[GitHub Spec-Kit](https://github.com/github/spec-kit)** Spec-Driven Development (SDD) with **Test-Driven Development (TDD)**, enforced by mandatory **Human-in-the-Loop (HITL)** review gates.
+This skill guides AI agents through a production-grade engineering workflow combining **[GitHub Spec-Kit](https://github.com/github/spec-kit)** Spec-Driven Development (SDD), **Test-Driven Development (TDD)**, **Risk-Based Human-in-the-Loop (HITL)** governance, **Evidence-Driven Verification**, and **Framework Profiles** (Flutter-first).
 
 ---
 
-## Agent Behavior Mandate: Mandatory Human Gates
-
-> [!CAUTION]
-> **AUTONOMOUS RUNAWAY IS STRICTLY FORBIDDEN.**
-> You MUST stop and present your work at each `🚦 HUMAN GATE`. Do NOT execute subsequent stages or code modifications until the user provides explicit approval. If the user provides feedback or requests changes, incorporate them and re-present at the same gate.
->
-> Detailed protocol & response handling: [references/human_in_the_loop_protocol.md](./references/human_in_the_loop_protocol.md)
-
----
-
-## 4-Stage Spec-Kit + TDD Pipeline with 7 Human Gates
+## 1. Core Workflow Pipeline
 
 ```text
-[ 1. Constitution ] -> [ 2. Specify & Plan ] -> [ 3. TDD Tasks Loop ] -> [ 4. Verify & Sign-off ]
-  🚦 Gate 1: Align       🚦 Gate 2: spec.md       Per Task:                🚦 Gate 7: Final Sign-off
-                         🚦 Gate 3: plan.md       🚦 Gate 5: RED test
-                         🚦 Gate 4: tasks.md      🚦 Gate 6: GREEN code
+User Intent ──> Repo Discovery ──> Risk & Spec ──> Technical Plan ──> Test Design ──> RED ──> GREEN ──> Verify & Evidence ──> CI/CD
 ```
 
----
-
-## Stage 1: Check & Enforce Project Constitution
-
-Every feature must conform to the repository's foundational rules before work begins:
-
-1. **Read Constitution**:
-   - Inspect `.specify/constitution.md` for non-negotiable architectural, testing, and security principles.
-   - Template: [templates/speckit_constitution_template.md](./templates/speckit_constitution_template.md)
-2. **Spec-Kit Deep Dive Guide**:
-   - For complete philosophy and command lifecycle: [references/github_spec_kit_guide.md](./references/github_spec_kit_guide.md)
-
-> [!IMPORTANT]
-> **🚦 HUMAN GATE 1: Constitution Alignment & Amendments**
-> - **Present**: Summary of constitutional constraints relevant to the requested feature. Flag any architectural friction or ambiguity.
-> - **Ask**: *"I have reviewed `.specify/constitution.md`. The constraints governing this work are: [summary]. Do these apply as written, or are any constitutional amendments or exceptions required?"*
-> - **Action**: **STOP.** Wait for human approval before creating specifications.
+The agent never acts as a pure code generator; it produces:
+$$\text{Implementation} + \text{Verification} + \text{Evidence}$$
 
 ---
 
-## Stage 2: Spec-Driven Development (Specify & Plan)
+## 2. Risk-Based Human-in-the-Loop (HITL) Protocol
 
-Before touching production code or tests, construct and validate specifications:
+The agent evaluates task risk into one of four tiers before execution:
+- **`LOW` (Fast Track)**: Cosmetic, text, formatting, safe refactoring, minor widgets.
+  - *Workflow*: Spec $\rightarrow$ Plan $\rightarrow$ TDD $\rightarrow$ Verify. No blocking gates between steps. Stop only at **Gate 7 (Final Sign-off)**.
+- **`MEDIUM`**: API integration, state management, database queries, local authentication.
+  - *Workflow*: Requires **Gate 2 (Spec Approval)** before technical planning, plus **Gate 7**.
+- **`HIGH`**: Payments, security, PII, architectural redesign, breaking API changes.
+  - *Workflow*: Requires **Gate 2 (Spec)**, **Gate 3 (Plan)**, and **Gate 7**.
+- **`CRITICAL`**: Irreversible production data deletion, credential modification.
+  - *Workflow*: Requires **Gate 0 (Pre-Execution Authorization)** prior to modifying any file.
 
-### 2a. Scaffold Specification (`spec.md`)
-1. Run: `python tools/speckit.py specify <feature-name>`
-2. Define User Stories, In-Scope / Out-of-Scope boundaries, and Domain Invariants.
-3. Template: [templates/speckit_specification_template.md](./templates/speckit_specification_template.md)
-4. Methodology guide: [references/sdd_methodology.md](./references/sdd_methodology.md)
-
-> [!IMPORTANT]
-> **🚦 HUMAN GATE 2: Specification Approval**
-> - **Present**: Executive summary of user stories, domain invariants, and out-of-scope boundaries. Link to [spec.md](./templates/speckit_specification_template.md).
-> - **Ask**: *"Please review the specification draft. Are the domain invariants correct? Are there any missing acceptance criteria or edge cases? Do you approve this specification?"*
-> - **Action**: **STOP.** Wait for human approval before authoring the technical blueprint.
-
-### 2b. Draft Technical Blueprint (`plan.md`)
-1. Run: `python tools/speckit.py plan <feature-name>`
-2. Define component flow, file layout, public interface contracts, and error handling matrices.
-3. Template: [templates/speckit_plan_template.md](./templates/speckit_plan_template.md)
-
-> [!IMPORTANT]
-> **🚦 HUMAN GATE 3: Technical Blueprint & Contract Approval**
-> - **Present**: Component diagrams, public interface signatures, data schemas, and error matrix. Link to [plan.md](./templates/speckit_plan_template.md).
-> - **Ask**: *"Please review the technical plan. Do the public interface signatures and data models meet your requirements? Is the error matrix complete? Do you approve this blueprint?"*
-> - **Action**: **STOP.** Wait for human approval before generating tasks.
-
-### 2c. Generate TDD Tasks (`tasks.md`)
-1. Run: `python tools/speckit.py tasks <feature-name>`
-2. Break requirements into sequential Red/Green/Refactor task items.
-3. Template: [templates/speckit_tasks_template.md](./templates/speckit_tasks_template.md)
-
-> [!IMPORTANT]
-> **🚦 HUMAN GATE 4: Task Execution Authorization**
-> - **Present**: Ordered breakdown of phases and individual TDD tasks. Link to [tasks.md](./templates/speckit_tasks_template.md).
-> - **Ask**: *"Here is the TDD task breakdown. Is the task ordering and scope appropriate? Do you authorize beginning TDD execution on Phase 1?"*
-> - **Action**: **STOP.** Wait for human authorization before writing test code.
+> [!CAUTION]
+> Autonomous runaway on HIGH and CRITICAL tasks is strictly forbidden. The agent MUST stop tool execution and await explicit human approval.
+> Detailed protocol: [references/human_in_the_loop_protocol.md](./references/human_in_the_loop_protocol.md) | [references/risk_assessment_guide.md](./references/risk_assessment_guide.md)
 
 ---
 
-## Stage 3: Test-Driven Development (TDD) Loop (Per Task)
+## 3. Engineering Stages
 
-Execute tasks sequentially in strict **Red -> Green -> Refactor** cycles with per-task gates:
+### Stage 1: Repository Discovery & Constitution Alignment
+1. Inspect `.specify/constitution.md` for architectural, testing, and security non-negotiables.
+2. Run `python tools/sde.py doctor` to verify repository readiness and detected framework profiles.
+3. If CRITICAL risk: Halt for **Gate 0 Pre-Execution Authorization**.
 
-### Step 1: RED (Write Failing Test)
-1. Author test asserting the specific scenario from `spec.md` and contract from `plan.md`.
-2. Avoid deep mocks; prefer in-memory fakes: [references/test_doubles_and_mocking.md](./references/test_doubles_and_mocking.md).
-3. Run test runner and verify it fails with the expected assertion failure.
+### Stage 2: Spec-Driven Development (Specify & Plan)
+1. **Scaffold Specification (`spec.md`)**:
+   - Run: `python tools/sde.py feature specify <feature-name>`
+   - Define User Stories, Domain Invariants, and Given-When-Then Acceptance Criteria.
+   - Assess Risk: `python tools/sde.py feature risk <feature-name> [--level / flags]`
+   - If MEDIUM, HIGH, or CRITICAL: Halt for **🚦 Gate 2: Specification Approval**.
+2. **Draft Technical Blueprint (`plan.md`)**:
+   - Run: `python tools/sde.py feature plan <feature-name>`
+   - Document Component Flow, File Structure, Public Interfaces, and Error Matrix.
+   - If HIGH or CRITICAL: Halt for **🚦 Gate 3: Technical Blueprint Approval**.
+3. **Pre-Implementation Change Impact Analysis (`impact.md`)**:
+   - Run: `python tools/sde.py feature impact <feature-name> --presentation ... --state ... --tests ...`
+   - Capture expected architectural blast radius: [references/change_impact_analysis.md](./references/change_impact_analysis.md).
+4. **Deconstruct TDD Tasks (`tasks.md`)**:
+   - Run: `python tools/sde.py feature tasks <feature-name>`
 
-> [!IMPORTANT]
-> **🚦 HUMAN GATE 5: Failing Test (Red) Approval**
-> - **Present**: The failing test code snippet and runner output confirming the expected failure mode.
-> - **Ask**: *"Task [X.Y] (RED): The test fails as expected with [assertion snippet]. Do you approve this test contract before I write the minimal implementation?"*
-> - **Action**: **STOP.** Wait for human approval before writing implementation code.
+### Stage 3: Test-Driven Development (TDD) Loop (Red -> Green -> Refactor)
+1. **RED (Write Failing Test)**:
+   - State explicit **Test Intent**: What behavior does this test prove? Why should it fail before implementation?
+   - Execute test runner (`flutter test`, `npm test`, `python -m unittest`).
+   - Confirm an **Assertion Failure** (valid RED). Syntax, missing imports, or missing runner are **Infrastructure Failures**, not valid RED.
+2. **GREEN (Minimal Implementation)**:
+   - Author minimal production code to make the test pass. No speculative logic.
+3. **REFACTOR (Polish Under Test Protection)**:
+   - Format, clean code, verify strict typing, run linters.
+   - Re-run test suite to ensure zero regressions: [references/tdd_lifecycle.md](./references/tdd_lifecycle.md).
+4. **Audit Change Scope**:
+   - Run `python tools/sde.py feature impact <feature-name> --audit`. If unexpected files were touched, analyze before continuing.
 
-### Step 2: GREEN (Minimal Implementation)
-1. Author the minimal production code needed to satisfy the test assertions.
-2. No speculative features or unasserted branches.
-
-### Step 3: REFACTOR (Polish Under Test Protection)
-1. Remove duplication, enforce strict typing, format code, and check linters.
-2. Re-run test suite to guarantee zero regressions.
-3. Lifecycle reference: [references/tdd_lifecycle.md](./references/tdd_lifecycle.md).
-
-> [!IMPORTANT]
-> **🚦 HUMAN GATE 6: Minimal Implementation & Refactor Approval**
-> - **Present**: Implementation code diff/snippet, refactor summary, and runner output showing all tests passing.
-> - **Ask**: *"Task [X.Y] (GREEN & REFACTOR): All tests pass cleanly. Refactor summary: [summary]. Do you approve this implementation to mark Task [X.Y] complete and move to the next task?"*
-> - **Action**: **STOP.** Wait for human approval before proceeding to the next task.
-
-*(Note: If the user explicitly commands fast-track mode, follow [references/human_in_the_loop_protocol.md](./references/human_in_the_loop_protocol.md) §6).*
-
----
-
-## Stage 4: Invariant Verification & Checklist Audit
-
-1. **Verify Invariants & Properties**:
-   - Run property-based or boundary checks: [references/invariant_and_property_testing.md](./references/invariant_and_property_testing.md).
-2. **Execute Quality Checklist**:
-   - Fill out and audit: [templates/speckit_checklist_template.md](./templates/speckit_checklist_template.md).
-3. **Verify Task Status**:
-   ```bash
-   python tools/speckit.py status
-   ```
-
-> [!IMPORTANT]
-> **🚦 HUMAN GATE 7: Final Verification & Merge Sign-Off**
-> - **Present**: Completed checklist summary, total test pass rate, code coverage, and clean lint/type status.
-> - **Ask**: *"All tasks are complete, 100% of tests pass, and the Spec-Kit checklist is satisfied. Do you give final approval to merge / finalize this feature?"*
-> - **Action**: **STOP.** Await final human authorization.
+### Stage 4: Evidence-Driven Verification & Sign-Off
+1. **Execute Quality Checks & Record Evidence**:
+   - Run static analysis and unit/widget test suites.
+   - Collect raw outputs into `.specify/specs/<feature-name>/evidence/`.
+   - Update `.specify/specs/<feature-name>/verification.md`: [references/evidence_protocol.md](./references/evidence_protocol.md).
+2. **Status Rules**:
+   - Use strictly: `PASS`, `FAIL`, `NOT_RUN`, `BLOCKED`, `N/A`.
+   - Never represent `NOT_RUN` as `PASS`. Missing optional suites (e.g. `integration_test/`) are marked `N/A`.
+3. **Final Sign-Off**:
+   - **🚦 Gate 7: Final Verification & Merge Sign-Off**. Present test results, evidence logs, and checklist summary for human authorization.
 
 ---
 
-## Reference Guides & Templates
+## 4. Framework Profiles
 
-| Resource | Purpose |
-| :--- | :--- |
-| [references/human_in_the_loop_protocol.md](./references/human_in_the_loop_protocol.md) | **HITL philosophy, gate rules, responses, revisions & escalations** |
-| [references/github_spec_kit_guide.md](./references/github_spec_kit_guide.md) | Spec-Kit artifact lifecycle and CLI usage |
-| [references/sdd_methodology.md](./references/sdd_methodology.md) | Spec-Driven Development deep dive |
-| [references/tdd_lifecycle.md](./references/tdd_lifecycle.md) | Red-Green-Refactor mechanics |
-| [references/invariant_and_property_testing.md](./references/invariant_and_property_testing.md) | Invariant and property-based test designs |
-| [references/test_doubles_and_mocking.md](./references/test_doubles_and_mocking.md) | Mocks vs. fakes vs. stubs guidance |
-| [templates/speckit_constitution_template.md](./templates/speckit_constitution_template.md) | Repository constitution template |
-| [templates/speckit_specification_template.md](./templates/speckit_specification_template.md) | Feature specification template with review gate |
-| [templates/speckit_plan_template.md](./templates/speckit_plan_template.md) | Technical blueprint template with review gate |
-| [templates/speckit_tasks_template.md](./templates/speckit_tasks_template.md) | TDD task list template with authorization gate |
-| [templates/speckit_checklist_template.md](./templates/speckit_checklist_template.md) | Final quality audit checklist with sign-off gate |
-| [examples/README.md](./examples/README.md) | Python & TypeScript reference implementations |
+SDE dynamically configures itself according to the repository's technology profile:
+- **Flutter Profile** (`profiles/flutter/`): Full support for Dart, Bloc/Cubit, Riverpod, Provider, GetIt, unit tests, widget tests, integration tests, and apk/appbundle/ipa builds. Follows repository precedent: [references/flutter_engineering_guide.md](./references/flutter_engineering_guide.md).
+- **Android Profile** (`profiles/android/`): Native Kotlin/Java Gradle lifecycle.
+- **Node.js Profile** (`profiles/node/`): JS/TS testing, linting, and build pipeline.
+- Profile Guide: [references/framework_profiles_guide.md](./references/framework_profiles_guide.md).
+
+---
+
+## 5. Reference Guides & Templates
+
+| Category | Document | Description |
+| :--- | :--- | :--- |
+| **Protocol** | [references/human_in_the_loop_protocol.md](./references/human_in_the_loop_protocol.md) | Risk-based HITL gate triggers, responses & fast-track |
+| **Protocol** | [references/risk_assessment_guide.md](./references/risk_assessment_guide.md) | Risk tier taxonomy and factor definitions |
+| **Protocol** | [references/evidence_protocol.md](./references/evidence_protocol.md) | Evidence collection and verification status rules |
+| **Protocol** | [references/change_impact_analysis.md](./references/change_impact_analysis.md) | Blast radius prediction and git diff audits |
+| **Framework** | [references/flutter_engineering_guide.md](./references/flutter_engineering_guide.md) | Flutter TDD, architecture inspection, and testing |
+| **Framework** | [references/framework_profiles_guide.md](./references/framework_profiles_guide.md) | Profile architecture and command resolution |
+| **SDD/TDD** | [references/sdd_methodology.md](./references/sdd_methodology.md) | Spec-Driven Development deep dive |
+| **SDD/TDD** | [references/tdd_lifecycle.md](./references/tdd_lifecycle.md) | Red-Green-Refactor mechanics and anti-patterns |
+| **Templates** | [templates/risk_template.md](./templates/risk_template.md) | Risk assessment template (`risk.md`) |
+| **Templates** | [templates/impact_template.md](./templates/impact_template.md) | Expected architectural scope template (`impact.md`) |
+| **Templates** | [templates/verification_template.md](./templates/verification_template.md) | Evidence-driven verification template (`verification.md`) |
+| **Templates** | [templates/speckit_specification_template.md](./templates/speckit_specification_template.md) | Specification template (`spec.md`) |
+| **Templates** | [templates/speckit_plan_template.md](./templates/speckit_plan_template.md) | Technical blueprint template (`plan.md`) |
+| **Templates** | [templates/speckit_tasks_template.md](./templates/speckit_tasks_template.md) | TDD task checklist template (`tasks.md`) |
+| **Templates** | [templates/speckit_checklist_template.md](./templates/speckit_checklist_template.md) | Final quality audit checklist (`checklist.md`) |

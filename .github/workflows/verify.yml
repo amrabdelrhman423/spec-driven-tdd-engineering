@@ -1,0 +1,38 @@
+name: SDE System Verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run SDE Doctor
+        run: python tools/sde.py doctor
+
+      - name: Validate Skills
+        run: python tools/skill_builder.py validate
+
+      - name: Run Unit Tests
+        run: python -m unittest discover -s tests
+
+      - name: Run Python Example Tests
+        run: python -m unittest discover -s .agents/skills/spec-driven-tdd-engineering/examples/python_example
+
+      - name: Run JavaScript Example Tests
+        run: node --test .agents/skills/spec-driven-tdd-engineering/examples/typescript_example/cart_discount.test.js

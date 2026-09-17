@@ -1,0 +1,11 @@
+name: android
+platform: mobile
+language: Kotlin / Java
+framework: Android SDK
+
+commands:
+  analyze: "./gradlew lint"
+  format: "./gradlew ktlintCheck"
+  test: "./gradlew testDebugUnitTest"
+  integration_test: "./gradlew connectedAndroidTest"
+  build: "./gradlew assembleDebug"

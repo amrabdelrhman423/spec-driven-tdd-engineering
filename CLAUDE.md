@@ -1,8 +1,8 @@
 # CLAUDE.md - Anthropic Claude Project Directives
 
-Welcome to the TDD + SDD workspace. This file instructs Claude Code and Claude-powered agents on workspace capabilities, skills, and coding standards.
+Welcome to the SDE (Spec-Driven Engineering) workspace. This file instructs Claude Code and Claude-powered agents on workspace capabilities, skills, and coding standards.
 
-This repository implements the **[GitHub Spec-Kit](https://github.com/github/spec-kit)** Spec-Driven Development (SDD) standard.
+This repository implements the **SDE Framework** fusing **[GitHub Spec-Kit](https://github.com/github/spec-kit)** Spec-Driven Development (SDD) with Test-Driven Development (TDD), Risk-Based Human-in-the-Loop, Evidence-Driven Verification, and Framework Profiles.
 
 ---
 
@@ -11,70 +11,56 @@ This repository implements the **[GitHub Spec-Kit](https://github.com/github/spe
 Claude skills are located in `.claude/skills/`:
 
 - **`spec-driven-tdd-engineering`** (`.claude/skills/spec-driven-tdd-engineering/SKILL.md`):
-  Full workflow for GitHub Spec-Kit Spec-Driven Development (SDD) and Test-Driven Development (TDD).
-  - Use when the user asks to implement features, fix issues, or refactor code.
-  - Review `references/github_spec_kit_guide.md` for the Spec-Kit artifact pipeline.
-  - Review `references/sdd_methodology.md` for spec requirements.
-  - Review `references/tdd_lifecycle.md` for the Red-Green-Refactor cycle.
+  Full workflow for SDD, TDD, Risk-based HITL (LOW/MED/HIGH/CRITICAL), Evidence verification, and Framework Profiles.
+  - Review `references/human_in_the_loop_protocol.md` for gate triggers.
+  - Review `references/evidence_protocol.md` for verification status rules.
+  - Review `references/flutter_engineering_guide.md` when operating in Flutter projects.
 - **`skill-creator`** (`.claude/skills/skill-creator/SKILL.md`):
-  Meta-skill to scaffold and validate skills for both Claude and AGY.
-  - Use when the user asks to create, modify, or validate an agent skill.
+  Meta-skill to scaffold, lint, and validate skills for both Claude and AGY.
 
 ---
 
-## 2. GitHub Spec-Kit SDD Commands
+## 2. SDE CLI Commands
 
-Use `tools/speckit.py` to drive the SDD workflow:
+Use `tools/sde.py` to drive the workflow:
 ```bash
-# Check repository constitution
-cat .specify/constitution.md
+# Diagnostic health check
+python tools/sde.py doctor
 
-# Scaffold a new feature specification
-python tools/speckit.py specify <feature-name>
+# Feature specification and risk assessment
+python tools/sde.py feature specify <feature-name>
+python tools/sde.py feature risk <feature-name> --level medium
 
-# Scaffold a technical blueprint
-python tools/speckit.py plan <feature-name>
+# Technical blueprint and change scope estimation
+python tools/sde.py feature plan <feature-name>
+python tools/sde.py feature impact <feature-name> --presentation ... --state ...
 
-# Scaffold TDD tasks
-python tools/speckit.py tasks <feature-name>
+# Deconstruct TDD tasks
+python tools/sde.py feature tasks <feature-name>
 
-# Check specification and task completion progress
-python tools/speckit.py status
+# Post-implementation change scope audit
+python tools/sde.py feature impact <feature-name> --audit
+
+# Orchestrate complete pipeline
+python tools/sde.py run <feature-name>
+
+# Check status across all features
+python tools/sde.py status
 ```
 
----
-
-## 3. Skill & Testing CLI Commands
-
-- **Validate all skills**:
-  ```bash
-  python tools/skill_builder.py validate
-  ```
-- **Sync skills between agents**:
-  ```bash
-  python tools/skill_builder.py sync
-  ```
-- **Scaffold a new skill**:
-  ```bash
-  python tools/skill_builder.py new <skill_name> --desc "Use this skill when..."
-  ```
-- **Run Python example tests**:
-  ```bash
-  python -m unittest discover -s .agents/skills/spec-driven-tdd-engineering/examples/python_example
-  ```
-- **Run JavaScript example tests**:
-  ```bash
-  node --test .agents/skills/spec-driven-tdd-engineering/examples/typescript_example/cart_discount.test.js
-  ```
+*(Legacy aliases `python tools/speckit.py` and `python tools/skill_builder.py` remain fully supported).*
 
 ---
 
-## 4. Strict Development Guidelines
+## 3. Strict Development Guidelines
 
 1. **Constitution First**: Check `.specify/constitution.md` before starting work.
-2. **Human Gates (HITL)**: Stop and solicit human review at each of the 7 gates in `spec-driven-tdd-engineering`. Never advance autonomously without explicit approval.
-3. **Spec & Plan First (SDD)**: No coding without `spec.md` and `plan.md`. Document requirements, domain invariants, and interfaces.
-4. **Always Red First (TDD)**: Write failing tests before writing production code. Confirm they fail for the intended reason.
-5. **Keep Implementation Minimal**: Satisfy the tests with the cleanest, simplest logic.
-6. **Refactor Safely**: Clean code and types while keeping all tests passing.
-
+2. **Diagnostic Check**: Run `python tools/sde.py doctor` to verify environment and framework profile.
+3. **Risk-Based Human Gates (HITL)**:
+   - `LOW`: Fast-track mode enabled; verify autonomously and stop at Gate 7.
+   - `MEDIUM`: Stop at Gate 2 (Spec Approval) and Gate 7 (Final Sign-off).
+   - `HIGH`: Stop at Gate 2 (Spec), Gate 3 (Plan), and Gate 7.
+   - `CRITICAL`: Stop at Gate 0 (Pre-Execution Authorization) before any file is touched.
+4. **Follow Repository Precedent**: Follow existing state management, DI, and architecture patterns before introducing personal preference.
+5. **Always Red First (TDD)**: Witness expected assertion failure before writing implementation. Infrastructure/syntax errors do not count as RED.
+6. **Evidence Integrity**: Record real logs in `evidence/`. Never claim `NOT_RUN` as `PASS`. Record unexecuted optional suites as `N/A`.

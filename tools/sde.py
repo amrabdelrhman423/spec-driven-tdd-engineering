@@ -7,6 +7,7 @@ Unified tool for SDD, TDD, Risk-based HITL, Evidence verification, and Framework
 import argparse
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -24,7 +25,7 @@ if hasattr(sys.stdout, "reconfigure"):
         pass
 
 from core.risk import RiskLevel, RiskFactors, assess_risk, evaluate_hitl_gates, load_risk_assessment
-from core.evidence import VerificationStatus, VerificationReport, EvidenceCollector
+from core.evidence import VerificationStatus, VerificationReport, EvidenceCollector, VerificationItem
 from core.impact import ChangeScope, ImpactAnalyzer
 from core.profiles import detect_profile, ProfileRegistry
 from core.doctor import run_doctor
@@ -72,21 +73,33 @@ def cmd_sde_run(args):
         sys.exit(1)
 
 
+def cmd_sde_feature_create(args):
+    feature = args.feature.strip().lower().replace("_", "-")
+    print(f"\n[INFO] Scaffolding complete feature: {feature}")
+    cmd_specify(args)
+    cmd_plan(args)
+    cmd_tasks(args)
+    cmd_sde_feature_risk(args)
+    print(f"[SUCCESS] Feature '{feature}' fully scaffolded with spec, plan, tasks, and risk assessment.\n")
+
+
 def cmd_sde_feature_risk(args):
     feature = args.feature.strip().lower().replace("_", "-")
     feat_dir = ROOT_DIR / ".specify" / "specs" / feature
     feat_dir.mkdir(parents=True, exist_ok=True)
 
     factors = RiskFactors(
-        architecture_change=args.architecture,
-        security_sensitive=args.security,
-        data_migration=args.migration,
-        production_impact=args.production,
-        breaking_change=args.breaking,
-        irreversible_deletion=args.destructive,
+        architecture_change=getattr(args, "architecture", False),
+        security_sensitive=getattr(args, "security", False),
+        data_migration=getattr(args, "migration", False),
+        production_impact=getattr(args, "production", False),
+        breaking_change=getattr(args, "breaking", False),
+        irreversible_deletion=getattr(args, "destructive", False),
     )
-    explicit_lvl = RiskLevel(args.level.upper()) if args.level else None
-    assessment = assess_risk(feature, factors, rationale=args.rationale, explicit_level=explicit_lvl)
+    lvl_arg = getattr(args, "level", None)
+    explicit_lvl = RiskLevel(lvl_arg.upper()) if lvl_arg else None
+    rationale_arg = getattr(args, "rationale", None)
+    assessment = assess_risk(feature, factors, rationale=rationale_arg, explicit_level=explicit_lvl)
 
     risk_path = feat_dir / "risk.md"
     risk_path.write_text(assessment.to_markdown(), encoding="utf-8")
@@ -129,6 +142,108 @@ def cmd_sde_feature_impact(args):
         )
         saved = analyzer.save_expected_scope(feat_dir, scope)
         print(f"[SUCCESS] Saved change scope to: {saved}")
+
+
+def cmd_sde_feature_test(args):
+    feature = args.feature.strip().lower().replace("_", "-")
+    profile = detect_profile(ROOT_DIR)
+    resolved = profile.resolve_commands(ROOT_DIR)
+    test_cmd = resolved.get("test")
+
+    if not test_cmd or not test_cmd.is_applicable or not test_cmd.command:
+        print(f"[WARN] No applicable test command for profile '{profile.name}' ({test_cmd.skip_reason if test_cmd else 'N/A'})")
+        return
+
+    print(f"\n[INFO] Running test command for {feature}: `{test_cmd.command}`")
+    proc = subprocess.run(test_cmd.command, shell=True, cwd=ROOT_DIR)
+    if proc.returncode == 0:
+        print("[PASS] Tests completed successfully.")
+    else:
+        print(f"[FAIL] Tests exited with code {proc.returncode}.")
+        sys.exit(proc.returncode)
+
+
+def cmd_sde_feature_implement(args):
+    feature = args.feature.strip().lower().replace("_", "-")
+    tasks_file = ROOT_DIR / ".specify" / "specs" / feature / "tasks.md"
+    if not tasks_file.exists():
+        print(f"[ERROR] No tasks found at {tasks_file}. Run 'sde feature tasks {feature}' first.")
+        sys.exit(1)
+
+    text = tasks_file.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    pending = [line.strip() for line in lines if line.strip().startswith("- [ ]")]
+    completed = [line.strip() for line in lines if re.match(r"^-\s*\[[xX]\]", line.strip())]
+
+    print(f"\n=== Implementation Status: {feature} ===")
+    print(f"Completed: {len(completed)} task(s)")
+    print(f"Remaining: {len(pending)} task(s)")
+    if pending:
+        print("\nNext Active Task:")
+        print(f" -> {pending[0]}")
+        print("\nGuidance: Follow TDD (Red -> Green -> Refactor). Witness assertion failure before writing code.")
+    else:
+        print("\nAll tasks marked complete! Proceed to 'sde feature verify'.")
+    print()
+
+
+def cmd_sde_feature_verify(args):
+    feature = args.feature.strip().lower().replace("_", "-")
+    feat_dir = ROOT_DIR / ".specify" / "specs" / feature
+    if not feat_dir.exists():
+        print(f"[ERROR] Feature directory does not exist: {feat_dir}")
+        sys.exit(1)
+
+    print(f"\n=== Running SDE Verification for: {feature} ===")
+    engine = WorkflowEngine(ROOT_DIR)
+    collector = EvidenceCollector(feat_dir)
+    profile = engine.profile
+    resolved_cmds = profile.resolve_commands(ROOT_DIR)
+
+    report = VerificationReport(
+        feature_name=feature,
+        specification_status=VerificationStatus.PASS,
+    )
+
+    # 1. Tests
+    test_res = resolved_cmds.get("test")
+    if test_res and test_res.is_applicable and test_res.command:
+        proc = subprocess.run(test_res.command, shell=True, cwd=ROOT_DIR, capture_output=True, text=True)
+        collector.record_log("tests.txt", proc.stdout + "\n" + proc.stderr)
+        status = VerificationStatus.PASS if proc.returncode == 0 else VerificationStatus.FAIL
+        report.tests_item = VerificationItem(
+            name="Tests",
+            status=status,
+            command=test_res.command,
+            output_summary="Passed cleanly." if proc.returncode == 0 else "Execution failed.",
+            evidence_file="tests.txt",
+        )
+    else:
+        report.tests_item = VerificationItem(
+            name="Tests",
+            status=VerificationStatus.NA,
+            output_summary=test_res.skip_reason if test_res else "N/A",
+        )
+
+    # 2. Static Analysis
+    ana_res = resolved_cmds.get("analyze")
+    if ana_res and ana_res.is_applicable and ana_res.command:
+        proc = subprocess.run(ana_res.command, shell=True, cwd=ROOT_DIR, capture_output=True, text=True)
+        collector.record_log("analysis.txt", proc.stdout + "\n" + proc.stderr)
+        status = VerificationStatus.PASS if proc.returncode == 0 else VerificationStatus.FAIL
+        report.analysis_item = VerificationItem(
+            name="Static Analysis",
+            status=status,
+            command=ana_res.command,
+            output_summary="Clean." if proc.returncode == 0 else "Issues found.",
+            evidence_file="analysis.txt",
+        )
+    else:
+        report.analysis_item = VerificationItem(name="Static Analysis", status=VerificationStatus.NA)
+
+    verif_path = collector.write_verification_report(report)
+    print(f"[SUCCESS] Verification report generated at: {verif_path}")
+    print(f"Overall Status: {'PASS' if report.is_fully_passing else 'FAIL / INCOMPLETE'}\n")
 
 
 def cmd_sde_profile(args):
@@ -192,6 +307,9 @@ def cmd_sde_skill(args):
                         print(f" - {s.name}: {desc[:80]}...")
                     except Exception:
                         print(f" - {s.name}")
+    elif args.skill_action == "new":
+        created = scaffold_skill(ROOT_DIR, args.name, getattr(args, "desc", None))
+        print(f"[SUCCESS] Scaffolded new skill at: {created}")
 
 
 def main():
@@ -220,6 +338,12 @@ def main():
     # sde feature
     feat_parser = subparsers.add_parser("feature", help="Manage individual feature artifacts")
     feat_subs = feat_parser.add_subparsers(dest="feature_action", required=True)
+
+    # sde feature create
+    f_create = feat_subs.add_parser("create", help="Scaffold full feature (spec, plan, tasks, risk)")
+    f_create.add_argument("feature", help="Feature name")
+    f_create.add_argument("--level", choices=["low", "medium", "high", "critical"], default="medium")
+    f_create.add_argument("--force", action="store_true")
 
     # sde feature specify
     f_spec = feat_subs.add_parser("specify", help="Scaffold feature specification (spec.md)")
@@ -260,6 +384,18 @@ def main():
     f_impact.add_argument("--config", nargs="*", help="Expected config files")
     f_impact.add_argument("--audit", action="store_true", help="Audit actual git changes against expected scope")
 
+    # sde feature test
+    f_test = feat_subs.add_parser("test", help="Run tests for feature using detected profile")
+    f_test.add_argument("feature", help="Feature name")
+
+    # sde feature implement
+    f_impl = feat_subs.add_parser("implement", help="Display next active TDD implementation task")
+    f_impl.add_argument("feature", help="Feature name")
+
+    # sde feature verify
+    f_verif = feat_subs.add_parser("verify", help="Run checks and compile verification report with evidence")
+    f_verif.add_argument("feature", help="Feature name")
+
     # sde feature status
     f_status = feat_subs.add_parser("status", help="Show status for a feature")
     f_status.add_argument("feature", nargs="?", help="Feature name")
@@ -270,7 +406,13 @@ def main():
 
     # sde skill
     skill_parser = subparsers.add_parser("skill", help="Manage and validate agent skills")
-    skill_parser.add_argument("skill_action", choices=["validate", "sync", "list"])
+    skill_subs = skill_parser.add_subparsers(dest="skill_action", required=True)
+    skill_subs.add_parser("validate", help="Validate all skills")
+    skill_subs.add_parser("sync", help="Synchronize skills to Claude mirror")
+    skill_subs.add_parser("list", help="List installed skills")
+    s_new = skill_subs.add_parser("new", help="Scaffold new skill")
+    s_new.add_argument("name", help="Skill name")
+    s_new.add_argument("--desc", help="Skill description")
 
     args = parser.parse_args()
 
@@ -283,7 +425,9 @@ def main():
     elif args.command == "run":
         cmd_sde_run(args)
     elif args.command == "feature":
-        if args.feature_action == "specify":
+        if args.feature_action == "create":
+            cmd_sde_feature_create(args)
+        elif args.feature_action == "specify":
             cmd_specify(args)
         elif args.feature_action == "plan":
             cmd_plan(args)
@@ -293,6 +437,12 @@ def main():
             cmd_sde_feature_risk(args)
         elif args.feature_action == "impact":
             cmd_sde_feature_impact(args)
+        elif args.feature_action == "test":
+            cmd_sde_feature_test(args)
+        elif args.feature_action == "implement":
+            cmd_sde_feature_implement(args)
+        elif args.feature_action == "verify":
+            cmd_sde_feature_verify(args)
         elif args.feature_action == "status":
             cmd_status(args)
     elif args.command == "profile":

@@ -47,5 +47,25 @@ class TestSDECLI(unittest.TestCase):
                     self.assertTrue(impact_file.exists())
                     self.assertIn("lib/view.dart", impact_file.read_text(encoding="utf-8"))
 
+    def test_sde_feature_create_and_implement(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_root = Path(tmpdir)
+            with patch("tools.sde.ROOT_DIR", test_root), patch("tools.speckit.SPECIFY_DIR", test_root / ".specify"):
+                with patch("sys.argv", ["sde", "feature", "create", "login-flow", "--level", "medium"]):
+                    main()
+                    feat_dir = test_root / ".specify" / "specs" / "login-flow"
+                    self.assertTrue((feat_dir / "spec.md").exists())
+                    self.assertTrue((feat_dir / "plan.md").exists())
+                    self.assertTrue((feat_dir / "tasks.md").exists())
+                    self.assertTrue((feat_dir / "risk.md").exists())
+
+                with patch("sys.argv", ["sde", "feature", "implement", "login-flow"]):
+                    with patch("sys.stdout", new_callable=io.StringIO) as mock_out:
+                        main()
+                        out = mock_out.getvalue()
+                        self.assertIn("Implementation Status: login-flow", out)
+                        self.assertIn("Next Active Task", out)
+
 if __name__ == "__main__":
     unittest.main()
+

@@ -1,0 +1,9 @@
+{
+  "name": "cart-discount-tdd-example",
+  "version": "1.0.0",
+  "description": "TDD & SDD Example for Shopping Cart Discounts",
+  "main": "cart_discount.js",
+  "scripts": {
+    "test": "node --test"
+  }
+}
